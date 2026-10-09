@@ -12,7 +12,7 @@ public class Post {
     private final LocalDateTime createdAt;
 
     public Post(long id, String title, String content, Category category, String tag) {
-        PostValidator.validate(title, content, category, tag);
+        PostValidator.validate(title, content, category);
         this.title = title;
         this.content = content;
         this.category = category;
@@ -50,7 +50,7 @@ public class Post {
     }
 
     public void update(String title, String content, Category category, String tag) {
-        PostValidator.validate(title, content, category, tag);
+        PostValidator.validate(title, content, category);
         this.title = title;
         this.content = content;
         this.category = category;

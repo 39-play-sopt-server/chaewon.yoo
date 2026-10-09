@@ -3,7 +3,7 @@ package org.sopt.server.validate;
 import org.sopt.server.model.Category;
 
 public class PostValidator {
-    public static void validate(String title, String content, Category category, String tag) {
+    public static void validate(String title, String content, Category category) {
         if (title == null || title.isBlank()) {
             throw new IllegalArgumentException("제목을 입력해주세요.");
         }
