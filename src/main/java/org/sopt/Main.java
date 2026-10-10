@@ -1,12 +1,11 @@
 package org.sopt;
 
-import org.sopt.controller.PostController;
-import org.sopt.view.PostView;
+import org.sopt.client.PostClient;
+import org.sopt.config.PostConfig;
 
 public class Main {
     public static void main(String[] args) {
-        PostView view = new PostView();
-        PostController controller = new PostController(view);
-        controller.run();
+        PostClient client = PostConfig.createClient();
+        client.run();
     }
 }
