@@ -1,5 +1,6 @@
 package org.sopt.server.repository;
 
+import org.springframework.stereotype.Repository;
 import org.sopt.server.exception.PostNotFoundException;
 import org.sopt.server.model.Post;
 import java.util.ArrayList;
@@ -8,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Repository
 public class PostRepository {
     private final Map<Long, Post> posts = new HashMap<>();
     private long nextId = 1;
