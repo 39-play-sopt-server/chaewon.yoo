@@ -1,11 +1,11 @@
 package org.sopt;
 
-import org.sopt.client.PostClient;
-import org.sopt.config.PostConfig;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+@SpringBootApplication
 public class Main {
     public static void main(String[] args) {
-        PostClient client = PostConfig.createClient();
-        client.run();
+        SpringApplication.run(Main.class, args);
     }
 }

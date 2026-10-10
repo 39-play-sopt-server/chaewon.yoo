@@ -1,10 +1,12 @@
 package org.sopt.server.service;
 
+import org.springframework.stereotype.Service;
 import org.sopt.server.model.Category;
 import org.sopt.server.model.Post;
 import org.sopt.server.repository.PostRepository;
 import java.util.List;
 
+@Service
 public class PostService {
     private final PostRepository repository;
 
