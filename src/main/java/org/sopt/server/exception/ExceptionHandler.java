@@ -10,7 +10,7 @@ public class ExceptionHandler {
         try {
             return action.get();
         } catch (IllegalArgumentException | PostNotFoundException e) {
-            return new Response<>(false, e.getMessage(), null);
+            return Response.fail(e.getMessage());
         }
     }
 }
