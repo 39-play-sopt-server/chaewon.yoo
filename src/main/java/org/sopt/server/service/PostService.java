@@ -3,6 +3,7 @@ package org.sopt.server.service;
 import org.sopt.server.model.Category;
 import org.sopt.server.model.Post;
 import org.sopt.server.repository.PostRepository;
+import org.sopt.server.exception.PostNotFoundException;
 import java.util.List;
 
 public class PostService {
@@ -27,8 +28,14 @@ public class PostService {
         return repository.findById(id);
     }
 
+    public void validatePostExists(long id) {
+        if (!repository.existsById(id)) {
+            throw new PostNotFoundException();
+        }
+    }
+
     public Post updatePost(long id, String title, String content, Category category, String tag) {
-        Post post = readPost(id);
+        Post post = repository.findById(id);
         post.update(title, content, category, tag);
         return post;
     }

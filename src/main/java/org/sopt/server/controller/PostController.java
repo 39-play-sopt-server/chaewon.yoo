@@ -7,6 +7,7 @@ import org.sopt.server.dto.response.PostResponse;
 import org.sopt.server.dto.request.CreatePostRequest;
 import org.sopt.server.dto.request.UpdatePostRequest;
 import org.sopt.common.response.Response;
+import org.sopt.common.response.SuccessMessage;
 import org.sopt.server.service.PostService;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,10 +24,10 @@ public class PostController {
     public Response<PostResponse> createPost(CreatePostRequest request) {
         return exceptionHandler.execute(() -> {
             Post post = service.createPost(
-                    request.getTitle(), request.getContent(),
-                    readCategory(request.getCategory()), request.getTag());
+                    request.title(), request.content(),
+                    Category.fromNumber(request.category()), request.tag());
 
-            return new Response<>(true, "게시글이 작성되었습니다.", new PostResponse(post));
+            return Response.success(SuccessMessage.POST_CREATED, new PostResponse(post));
         });
     }
 
@@ -37,7 +38,7 @@ public class PostController {
             for (int i = 0; i < posts.size(); i++) {
                 data.add(new PostResponse(posts.get(i)));
             }
-            return new Response<>(true, "게시글 목록을 조회했습니다.", data);
+            return Response.success(SuccessMessage.POSTS_READ, data);
         });
     }
 
@@ -45,17 +46,24 @@ public class PostController {
         return exceptionHandler.execute(() -> {
             Post post = service.readPost(id);
 
-            return new Response<>(true, "게시글을 조회했습니다.", new PostResponse(post));
+            return Response.success(SuccessMessage.POST_READ, new PostResponse(post));
+        });
+    }
+
+    public Response<Void> existsPost(long id) {
+        return exceptionHandler.execute(() -> {
+            service.validatePostExists(id);
+            return Response.success(SuccessMessage.POST_EXISTS);
         });
     }
 
     public Response<PostResponse> updatePost(long id, UpdatePostRequest request) {
         return exceptionHandler.execute(() -> {
             Post post = service.updatePost(
-                    id, request.getTitle(), request.getContent(),
-                    readCategory(request.getCategory()), request.getTag());
+                    id, request.title(), request.content(),
+                    Category.fromNumber(request.category()), request.tag());
 
-            return new Response<>(true, "게시글이 수정되었습니다.", new PostResponse(post));
+            return Response.success(SuccessMessage.POST_UPDATED, new PostResponse(post));
         });
     }
 
@@ -63,16 +71,8 @@ public class PostController {
         return exceptionHandler.execute(() -> {
             service.deletePost(id);
 
-            return new Response<>(true, "게시글이 삭제되었습니다.", null);
+            return Response.success(SuccessMessage.POST_DELETED);
         });
     }
 
-    private Category readCategory(int number) {
-        switch (number) {
-            case 1: return Category.FREE;
-            case 2: return Category.QUESTION;
-            case 3: return Category.INFO;
-            default: throw new IllegalArgumentException("존재하지 않는 카테고리입니다.");
-        }
-    }
 }

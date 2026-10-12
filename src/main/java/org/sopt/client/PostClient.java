@@ -90,7 +90,7 @@ public class PostClient {
 
     private void updatePostMenu() {
         long id = inputView.readPostId("수정할 게시글 ID: ");
-        Response<PostResponse> found = controller.readPost(id);
+        Response<Void> found = controller.existsPost(id);
         if (!found.isSuccess()) {
             outputView.printResponse(found);
             return;

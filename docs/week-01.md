@@ -38,7 +38,7 @@ static final은 공통으로 사용하는 고정값을 선언할 때 사용한�
 
 ```java
 private long nextId = 1;
-private final Map<Long, Post> posts = new HashMap<>();
+private final Map<Long, Post> posts = new LinkedHashMap<>();
 ```
 
 ID를 증가시키는 변수에는 long을 사용한다. Map의 키 자료형에는 기본형을 넣을 수 없어 Long을 사용한다.
@@ -55,13 +55,15 @@ ID를 증가시키는 변수에는 long을 사용한다. Map의 키 자료형에
 | PostClient | 메뉴에 따라 입력과 요청 및 결과 출력의 순서를 진행한다. |
 | InputView / OutputView | 사용자 입력과 화면 출력을 각각 담당한다. |
 | PostController | 요청을 받아 카테고리를 변환하고 Service 호출 결과를 응답으로 만든다. |
-| PostService | ID 발급과 게시글 생성·수정 등 작업 순서를 처리한다. |
-| PostRepository | HashMap과 ID를 관리하며 저장·조회·삭제를 수행한다. |
+| PostService | ID 발급과 게시글 생성·수정 등 작업 순서를 처리하고, 게시글 존재 여부를 검증한다. |
+| PostRepository | LinkedHashMap과 ID를 관리하며 저장·조회·삭제를 수행하고, 목록은 저장 순서대로 반환한다. |
 | Post / Category | 게시글 정보를 보관하고 카테고리 종류를 제한한다. |
 | PostValidator | 게시글 생성과 수정 전에 입력값을 검증한다. |
 | CreatePostRequest / UpdatePostRequest | 작성과 수정에 필요한 입력값을 묶어 전달한다. |
 | Response<T> / PostResponse | 공통 처리 결과와 게시글 정보를 전달한다. |
 | ExceptionHandler / PostNotFoundException | 정해진 예외를 실패 응답으로 바꾸고 없는 게시글 상황을 표현한다. |
+
+CreatePostRequest, UpdatePostRequest, PostResponse는 record로 구현했다. 데이터 전달에 필요한 필드와 생성자, 접근자 등을 간결하게 정의할 수 있다. 접근자는 getTitle() 대신 title()처럼 호출한다.
 
 게시글 작성 시 클라이언트가 입력값을 CreatePostRequest로 묶어 Controller에 전달한다. Service는 ID를 받아 Post를 만들고 검증을 통과하면 Repository에 저장한다. Controller가 성공 응답을 반환하면 클라이언트가 화면에 출력한다. 검증에 실패하면 예외를 실패 응답으로 바꿔 안내한다.
 

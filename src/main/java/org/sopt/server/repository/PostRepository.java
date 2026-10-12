@@ -3,13 +3,12 @@ package org.sopt.server.repository;
 import org.sopt.server.exception.PostNotFoundException;
 import org.sopt.server.model.Post;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public class PostRepository {
-    private final Map<Long, Post> posts = new HashMap<>();
+    private final Map<Long, Post> posts = new LinkedHashMap<>();
     private long nextId = 1;
 
     public long createId() {
@@ -21,13 +20,11 @@ public class PostRepository {
     }
 
     public List<Post> findAll() {
-        List<Long> ids = new ArrayList<>(posts.keySet());
-        Collections.sort(ids);
-        List<Post> result = new ArrayList<>();
-        for (int i = 0; i < ids.size(); i++) {
-            result.add(posts.get(ids.get(i)));
-        }
-        return result;
+        return new ArrayList<>(posts.values());
+    }
+
+    public boolean existsById(long id) {
+        return posts.containsKey(id);
     }
 
     public Post findById(long id) {
@@ -39,7 +36,9 @@ public class PostRepository {
     }
 
     public void deleteById(long id) {
-        findById(id);
+        if (!existsById(id)) {
+            throw new PostNotFoundException();
+        }
         posts.remove(id);
     }
 }

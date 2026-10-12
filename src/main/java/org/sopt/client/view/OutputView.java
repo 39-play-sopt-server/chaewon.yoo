@@ -30,17 +30,17 @@ public class OutputView {
         }
         for (int i = 0; i < posts.size(); i++) {
             PostResponse post = posts.get(i);
-            printMessage(post.getId() + ". " + post.getTitle());
+            printMessage(post.id() + ". " + post.title());
         }
     }
 
     public void printPost(PostResponse post) {
         System.out.println("\n=== 게시글 ===");
-        System.out.println("ID: " + post.getId());
-        System.out.println("제목: " + post.getTitle());
-        System.out.println("내용: " + post.getContent());
-        System.out.println("태그: " + post.getTag());
-        System.out.println("카테고리: " + post.getCategory());
-        System.out.println("작성일: " + post.getCreatedAt());
+        System.out.println("ID: " + post.id());
+        System.out.println("제목: " + post.title());
+        System.out.println("내용: " + post.content());
+        System.out.println("태그: " + post.tag());
+        System.out.println("카테고리: " + post.category());
+        System.out.println("작성일: " + post.createdAt());
     }
 }
