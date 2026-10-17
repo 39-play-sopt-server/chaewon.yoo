@@ -1,6 +1,9 @@
 package org.sopt.post.controller;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.sopt.post.repository.PostRepository;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -19,6 +22,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class PostApiTest {
+    @Autowired
+    private PostRepository repository;
+
+    @BeforeEach
+    void clearPosts() {
+        repository.deleteAll();
+    }
+
     @LocalServerPort
     private int port;
 

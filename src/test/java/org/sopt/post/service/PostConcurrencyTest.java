@@ -1,6 +1,9 @@
 package org.sopt.post.service;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sopt.post.dto.response.PostResponse;
 import org.sopt.post.domain.PostCategory;
 import org.sopt.post.repository.PostRepository;
@@ -15,10 +18,20 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.*;
 
+@SpringBootTest
 class PostConcurrencyTest {
+    @Autowired
+    private PostService service;
+    @Autowired
+    private PostRepository repository;
+
+    @BeforeEach
+    void clearPosts() {
+        repository.deleteAll();
+    }
+
     @Test
     void concurrentCreationDoesNotLosePostsOrDuplicateIds() throws Exception {
-        PostService service = new PostService(new PostRepository());
         ExecutorService executor = Executors.newFixedThreadPool(8);
         CountDownLatch start = new CountDownLatch(1);
         int count = 300;
@@ -39,7 +52,10 @@ class PostConcurrencyTest {
             List<PostResponse> posts = service.readPosts(0, count, null);
             assertEquals(count, posts.size());
             for (int i = 0; i < count; i++) {
-                assertEquals(i + 1, posts.get(i).id());
+                assertTrue(ids.contains(posts.get(i).id()));
+                if (i > 0) {
+                    assertTrue(posts.get(i - 1).id() < posts.get(i).id());
+                }
             }
         } finally {
             executor.shutdownNow();
@@ -48,7 +64,6 @@ class PostConcurrencyTest {
 
     @Test
     void concurrentDetailReadsKeepEveryIncrementAndReturnOwnSnapshot() throws Exception {
-        PostService service = new PostService(new PostRepository());
         PostResponse created = service.createPost("제목", "본문", PostCategory.FREE, "");
         ExecutorService executor = Executors.newFixedThreadPool(8);
         CountDownLatch start = new CountDownLatch(1);
@@ -77,7 +92,6 @@ class PostConcurrencyTest {
 
     @Test
     void concurrentUpdatesAndReadsDoNotMixFieldsFromDifferentVersions() throws Exception {
-        PostService service = new PostService(new PostRepository());
         long id = service.createPost("0", "0", PostCategory.FREE, "0").id();
         ExecutorService executor = Executors.newFixedThreadPool(8);
         CountDownLatch start = new CountDownLatch(1);
