@@ -1,19 +1,37 @@
 package org.sopt.post.domain;
 
 import java.time.LocalDateTime;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 
+@Entity
 public class Post {
-    private final long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(length = PostLimits.MAX_TITLE_LENGTH)
     private String title;
+
+    @Column(length = PostLimits.MAX_CONTENT_LENGTH)
     private String content;
+
+    @Enumerated(EnumType.STRING)
     private PostCategory category;
+
     private String tag;
-    private final LocalDateTime createdAt;
+    private LocalDateTime createdAt;
     private long viewCount;
 
-    public Post(long id, String title, String content, PostCategory category, String tag) {
+    protected Post() {}
+
+    public Post(String title, String content, PostCategory category, String tag) {
         update(title, content, category, tag);
-        this.id = id;
         this.createdAt = LocalDateTime.now();
     }
 
