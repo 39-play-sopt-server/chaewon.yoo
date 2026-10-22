@@ -17,7 +17,7 @@ import org.sopt.post.dto.request.UpdatePostRequest;
 import org.sopt.post.dto.response.PostResponse;
 import org.sopt.post.domain.PostCategory;
 import org.sopt.post.service.PostService;
-import java.util.List;
+import org.sopt.post.dto.response.PostPageResponse;
 
 @RestController
 @RequestMapping("/api/v1/posts")
@@ -39,12 +39,12 @@ public class PostController implements PostApi {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<PostResponse>>> readPosts(
+    public ResponseEntity<ApiResponse<PostPageResponse>> readPosts(
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "10") int size,
-            @RequestParam(name = "category", required = false) String category) {
-        PostCategory filter = category == null ? null : PostCategory.fromName(category);
-        List<PostResponse> posts = service.readPosts(page, size, filter);
+            @RequestParam(name = "category", required = false) Integer category) {
+        PostCategory filter = category == null ? null : PostCategory.fromNumber(category);
+        PostPageResponse posts = service.readPosts(page, size, filter);
         return ResponseEntity.status(PostSuccessCode.POSTS_READ.getStatus())
                 .body(ApiResponse.success(PostSuccessCode.POSTS_READ, posts));
     }

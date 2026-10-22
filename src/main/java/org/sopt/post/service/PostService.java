@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Sort;
 import org.sopt.post.dto.response.PostResponse;
+import org.sopt.post.dto.response.PostPageResponse;
 import org.sopt.post.domain.PostCategory;
 import org.sopt.post.domain.Post;
 import org.sopt.post.repository.PostRepository;
@@ -27,19 +28,26 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public List<PostResponse> readPosts(int page, int size, PostCategory category) {
+    public PostPageResponse readPosts(int page, int size, PostCategory category) {
         if (page < 0) {
             throw new PostException(PostErrorCode.INVALID_PAGE);
         }
         if (size < 1) {
             throw new PostException(PostErrorCode.INVALID_PAGE_SIZE);
         }
-        return repository.findAll(Sort.by("id")).stream()
+        List<Post> filtered = repository.findAll(Sort.by("id")).stream()
                 .filter(post -> category == null || post.getCategory() == category)
-                .skip((long) page * size)
+                .toList();
+        long offset = (long) page * size;
+        List<PostResponse> posts = filtered.stream()
+                .skip(offset)
                 .limit(size)
                 .map(PostResponse::from)
                 .toList();
+        long totalElements = filtered.size();
+        long totalPages = (totalElements + size - 1L) / size;
+        return new PostPageResponse(posts, page, size, totalElements, totalPages,
+                offset + posts.size() < totalElements);
     }
 
     public PostResponse readPost(long id) {

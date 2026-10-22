@@ -2,7 +2,7 @@ package org.sopt.post.code;
 
 import org.springframework.http.HttpStatus;
 import org.sopt.global.code.ErrorCode;
-import org.sopt.post.domain.PostLimits;
+import org.sopt.post.constant.PostLimits;
 
 public enum PostErrorCode implements ErrorCode {
     POST_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 게시글입니다."),

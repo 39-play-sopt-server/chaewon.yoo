@@ -1,5 +1,6 @@
 package org.sopt.post.domain;
 
+import org.sopt.post.constant.PostLimits;
 import org.sopt.post.exception.PostException;
 import org.sopt.post.code.PostErrorCode;
 

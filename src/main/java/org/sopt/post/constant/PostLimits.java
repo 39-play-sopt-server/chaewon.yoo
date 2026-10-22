@@ -1,4 +1,4 @@
-package org.sopt.post.domain;
+package org.sopt.post.constant;
 
 public final class PostLimits {
     public static final int MAX_TITLE_LENGTH = 100;

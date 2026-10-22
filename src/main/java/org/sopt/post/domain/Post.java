@@ -1,5 +1,6 @@
 package org.sopt.post.domain;
 
+import org.sopt.post.constant.PostLimits;
 import java.time.LocalDateTime;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
