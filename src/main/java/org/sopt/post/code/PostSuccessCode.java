@@ -4,6 +4,8 @@ import org.springframework.http.HttpStatus;
 import org.sopt.global.code.SuccessCode;
 
 public enum PostSuccessCode implements SuccessCode {
+    POST_LIKED(HttpStatus.OK, "좋아요를 추가했습니다."),
+    POST_LIKE_CANCELED(HttpStatus.OK, "좋아요를 취소했습니다."),
     POST_CREATED(HttpStatus.CREATED, "게시글이 작성되었습니다."),
     POSTS_READ(HttpStatus.OK, "게시글 목록을 조회했습니다."),
     POST_READ(HttpStatus.OK, "게시글을 조회했습니다."),
