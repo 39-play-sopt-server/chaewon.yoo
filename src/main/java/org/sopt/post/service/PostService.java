@@ -76,7 +76,6 @@ public class PostService {
             if (keyword.length() < 2) {
                 throw new PostException(PostErrorCode.SEARCH_TITLE_TOO_SHORT);
             }
-            // 전문 검색 SQL에 최신순 정렬이 있어 페이지 번호와 크기만 전달한다.
             PageRequest searchPageRequest = PageRequest.of(page, size);
             if (category == null) {
                 result = repository.searchByTitle(keyword, searchPageRequest);
@@ -146,7 +145,6 @@ public class PostService {
         postLikeRepository.deleteByMemberIdAndPostId(memberId, postId);
     }
 
-    // 좋아요 추가·취소·게시글 삭제는 게시글을 먼저 잠근 뒤 좋아요를 변경한다.
     private Post findPostForUpdate(long id) {
         return repository.findByIdForUpdate(id)
                 .orElseThrow(() -> new PostException(PostErrorCode.POST_NOT_FOUND));
