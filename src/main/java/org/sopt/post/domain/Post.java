@@ -1,43 +1,48 @@
 package org.sopt.post.domain;
 
 import org.sopt.post.constant.PostLimits;
-import java.time.LocalDateTime;
+import org.sopt.global.domain.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.FetchType;
+import org.sopt.member.domain.Member;
 
 @Entity
-public class Post {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(length = PostLimits.MAX_TITLE_LENGTH)
+public class Post extends BaseEntity {
+    @Column(nullable = false, length = PostLimits.MAX_TITLE_LENGTH)
     private String title;
 
-    @Column(length = PostLimits.MAX_CONTENT_LENGTH)
+    @Column(nullable = false, length = PostLimits.MAX_CONTENT_LENGTH)
     private String content;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private PostCategory category;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id")
+    private Member member;
+
     private String tag;
-    private LocalDateTime createdAt;
     private long viewCount;
 
     protected Post() {}
 
-    public Post(String title, String content, PostCategory category, String tag) {
+    public Post(Member member, String title, String content, PostCategory category, String tag) {
+        this.member = member;
         update(title, content, category, tag);
-        this.createdAt = LocalDateTime.now();
     }
 
-    public long getId() {
-        return this.id;
+    public Member getMember() {
+        return member;
+    }
+
+    public void removeAuthor() {
+        this.member = null;
     }
 
     public String getTitle() {
@@ -54,10 +59,6 @@ public class Post {
 
     public String getTag() {
         return this.tag;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return this.createdAt;
     }
 
     public long getViewCount() {

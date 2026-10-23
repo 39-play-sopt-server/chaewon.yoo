@@ -44,3 +44,6 @@ bin/
 .DS_Store
 # Local database credentials
 src/main/resources/application-local.yml
+
+# Local PR screenshots
+docs/images/
