@@ -42,7 +42,8 @@ bin/
 
 ### Mac OS ###
 .DS_Store
-# Local database credentials
+# Application configuration
+src/main/resources/application.yml
 src/main/resources/application-local.yml
 
 # Local PR screenshots
