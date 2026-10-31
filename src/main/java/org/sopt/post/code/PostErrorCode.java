@@ -5,6 +5,8 @@ import org.sopt.global.code.ErrorCode;
 import org.sopt.post.constant.PostLimits;
 
 public enum PostErrorCode implements ErrorCode {
+    SEARCH_TITLE_TOO_SHORT(HttpStatus.BAD_REQUEST, "제목 검색어는 2자 이상 입력해주세요."),
+    POST_ALREADY_LIKED(HttpStatus.CONFLICT, "이미 좋아요를 누른 게시글입니다."),
     POST_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 게시글입니다."),
     POST_TITLE_REQUIRED(HttpStatus.BAD_REQUEST, "제목을 입력해주세요."),
     POST_TITLE_TOO_LONG(HttpStatus.BAD_REQUEST, "제목은 " + PostLimits.MAX_TITLE_LENGTH + "자 이하여야 합니다."),

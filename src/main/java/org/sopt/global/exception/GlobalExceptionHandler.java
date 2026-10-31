@@ -1,5 +1,6 @@
 package org.sopt.global.exception;
 
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -22,6 +23,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException e) {
         ErrorCode code = e.getErrorCode();
         return failure(code);
+    }
+
+    @ExceptionHandler(PessimisticLockingFailureException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDatabaseLockException(PessimisticLockingFailureException e) {
+        log.warn("DB 잠금 충돌로 요청이 롤백되었습니다.", e);
+        return failure(GlobalErrorCode.DATABASE_CONFLICT);
     }
 
     @ExceptionHandler(Exception.class)
