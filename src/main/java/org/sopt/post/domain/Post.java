@@ -10,8 +10,10 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.FetchType;
 import org.sopt.member.domain.Member;
+import org.hibernate.annotations.DynamicUpdate;
 
 @Entity
+@DynamicUpdate
 public class Post extends BaseEntity {
     @Column(nullable = false, length = PostLimits.MAX_TITLE_LENGTH)
     private String title;
@@ -41,10 +43,6 @@ public class Post extends BaseEntity {
         return member;
     }
 
-    public void removeAuthor() {
-        this.member = null;
-    }
-
     public String getTitle() {
         return this.title;
     }
@@ -63,10 +61,6 @@ public class Post extends BaseEntity {
 
     public long getViewCount() {
         return this.viewCount;
-    }
-
-    public void increaseViewCount() {
-        this.viewCount++;
     }
 
     public void update(String title, String content, PostCategory category, String tag) {

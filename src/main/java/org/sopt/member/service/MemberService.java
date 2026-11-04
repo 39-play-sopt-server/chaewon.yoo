@@ -33,8 +33,7 @@ public class MemberService {
     public void deleteMember(long id) {
         Member member = memberRepository.findById(id)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
-        postRepository.findAllByMemberIdOrderByIdAsc(id).forEach(post -> post.removeAuthor());
-        postRepository.flush();
+        postRepository.clearAuthorByMemberId(id);
         postLikeRepository.deleteAllByMemberId(id);
         postLikeRepository.flush();
         memberRepository.delete(member);

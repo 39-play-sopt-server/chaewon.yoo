@@ -8,7 +8,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.sopt.post.dto.response.PostResponse;
 import org.sopt.post.dto.response.PostPageResponse;
 import org.sopt.post.domain.PostCategory;
@@ -72,15 +76,16 @@ public class PostService {
                 result = repository.findByCategory(category, pageRequest);
             }
         } else {
-            String keyword = title.strip();
+            String keyword = title.replace('"', ' ').strip();
             if (keyword.length() < 2) {
                 throw new PostException(PostErrorCode.SEARCH_TITLE_TOO_SHORT);
             }
+            String phrase = "\"" + keyword + "\"";
             PageRequest searchPageRequest = PageRequest.of(page, size);
             if (category == null) {
-                result = repository.searchByTitle(keyword, searchPageRequest);
+                result = repository.searchByTitle(phrase, searchPageRequest);
             } else {
-                result = repository.searchByCategoryAndTitle(category.name(), keyword, searchPageRequest);
+                result = repository.searchByCategoryAndTitle(category.name(), phrase, searchPageRequest);
             }
         }
 
@@ -99,8 +104,17 @@ public class PostService {
     }
 
     private PostPageResponse toPageResponse(Page<Post> result) {
+        List<Long> postIds = result.getContent().stream().map(Post::getId).toList();
+        Map<Long, Long> likeCounts = new HashMap<>();
+        if (!postIds.isEmpty()) {
+            repository.findAllWithAuthorByIdIn(postIds);
+            postLikeRepository.countByPostIds(postIds).forEach(count ->
+                    likeCounts.put(count.getPostId(), count.getLikeCount()));
+        }
         return new PostPageResponse(
-                result.getContent().stream().map(this::toPostResponse).toList(),
+                result.getContent().stream()
+                        .map(post -> PostResponse.from(post, likeCounts.getOrDefault(post.getId(), 0L)))
+                        .toList(),
                 result.getNumber(),
                 result.getSize(),
                 result.getTotalElements(),
@@ -109,9 +123,10 @@ public class PostService {
     }
 
     public PostResponse readPost(long id) {
-        Post post = findPostOrThrow(id);
-        post.increaseViewCount();
-        return toPostResponse(post);
+        if (repository.incrementViewCount(id) == 0) {
+            throw new PostException(PostErrorCode.POST_NOT_FOUND);
+        }
+        return toPostResponse(findPostOrThrow(id));
     }
 
     public PostResponse updatePost(long id, String title, String content, PostCategory category, String tag) {
@@ -131,18 +146,33 @@ public class PostService {
     }
 
     public void likePost(long postId, Long memberId) {
-        Post post = findPostForUpdate(postId);
         Member member = findMemberOrThrow(memberId);
-        if (postLikeRepository.existsByMemberIdAndPostId(memberId, postId)) {
-            throw new PostException(PostErrorCode.POST_ALREADY_LIKED);
+        Post post = findPostForShare(postId);
+        try {
+            postLikeRepository.saveAndFlush(new PostLike(member, post));
+        } catch (DataIntegrityViolationException exception) {
+            for (Throwable cause = exception.getCause(); cause != null; cause = cause.getCause()) {
+                if (cause instanceof ConstraintViolationException violation) {
+                    String name = violation.getConstraintName();
+                    if ("uk_post_like_member_post".equals(name)
+                            || (name != null && name.endsWith(".uk_post_like_member_post"))) {
+                        throw new PostException(PostErrorCode.POST_ALREADY_LIKED);
+                    }
+                }
+            }
+            throw exception;
         }
-        postLikeRepository.save(new PostLike(member, post));
     }
 
     public void cancelLike(long postId, Long memberId) {
-        findPostForUpdate(postId);
         findMemberOrThrow(memberId);
+        findPostForShare(postId);
         postLikeRepository.deleteByMemberIdAndPostId(memberId, postId);
+    }
+
+    private Post findPostForShare(long id) {
+        return repository.findByIdForShare(id)
+                .orElseThrow(() -> new PostException(PostErrorCode.POST_NOT_FOUND));
     }
 
     private Post findPostForUpdate(long id) {
