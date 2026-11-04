@@ -1,0 +1,77 @@
+name: Spring Boot CI/CD on EC2
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Build application image
+        run: docker build --tag "sopt-assignment:${GITHUB_SHA}" .
+      - name: Package image
+        if: github.event_name != 'pull_request'
+        run: docker save "sopt-assignment:${GITHUB_SHA}" | gzip > app-image.tar.gz
+      - uses: actions/upload-artifact@v4
+        if: github.event_name != 'pull_request'
+        with:
+          name: app-image
+          path: app-image.tar.gz
+          retention-days: 1
+
+  deploy:
+    name: Deploy to EC2
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: production-deploy
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: app-image
+      - name: Deploy Compose services
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+          EC2_KNOWN_HOSTS: ${{ secrets.EC2_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          : "${EC2_HOST:?}" "${EC2_SSH_KEY:?}" "${EC2_KNOWN_HOSTS:?}"
+          umask 077
+          ssh_dir=$(mktemp -d)
+          trap 'rm -rf "$ssh_dir"' EXIT
+          printf '%s\n' "$EC2_SSH_KEY" > "$ssh_dir/key"
+          printf '%s\n' "$EC2_KNOWN_HOSTS" > "$ssh_dir/known_hosts"
+          ssh_args=(-i "$ssh_dir/key" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$ssh_dir/known_hosts" -o ConnectTimeout=10)
+          server="ubuntu@$EC2_HOST"
+          ssh "${ssh_args[@]}" "$server" 'mkdir -p ~/sopt-deploy/deploy/nginx'
+          scp "${ssh_args[@]}" compose.yaml app-image.tar.gz "$server:~/sopt-deploy/"
+          scp "${ssh_args[@]}" deploy/nginx/compose.conf "$server:~/sopt-deploy/deploy/nginx/"
+          ssh "${ssh_args[@]}" "$server" bash -s -- "$GITHUB_SHA" <<'REMOTE'
+          set -euo pipefail
+          cd ~/sopt-deploy
+          export APP_IMAGE="sopt-assignment:$1"
+          export APP_CONFIG="$HOME/chaewon.yoo/src/main/resources/application.yml"
+          sudo docker load --input app-image.tar.gz
+          rm app-image.tar.gz
+          sudo --preserve-env=APP_IMAGE,APP_CONFIG docker compose up -d --no-build --wait --wait-timeout 120
+          sudo --preserve-env=APP_IMAGE,APP_CONFIG docker compose exec -T nginx nginx -t
+          sudo --preserve-env=APP_IMAGE,APP_CONFIG docker compose exec -T nginx nginx -s reload
+          REMOTE
+      - name: Check public HTTPS
+        run: curl --fail --silent --show-error --max-time 15 https://sopt-ucaeon.p-e.kr/v3/api-docs --output /dev/null
