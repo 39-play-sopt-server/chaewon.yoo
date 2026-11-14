@@ -11,6 +11,12 @@ public class Member extends BaseEntity {
     @Column(nullable = false, length = 100)
     private String name;
 
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(nullable = false)
+    private String password;
+
     protected Member() {}
 
     public Member(String name) {
@@ -21,6 +27,20 @@ public class Member extends BaseEntity {
             throw new MemberException(MemberErrorCode.MEMBER_NAME_TOO_LONG);
         }
         this.name = name;
+    }
+
+    public Member(String name, String email, String password) {
+        this(name);
+        this.email = email;
+        this.password = password;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getPassword() {
+        return password;
     }
 
     public String getName() {
