@@ -22,6 +22,8 @@ import org.sopt.post.repository.PostLikeRepository;
 import org.sopt.post.repository.PostRepository;
 import org.sopt.post.exception.PostException;
 import org.sopt.post.code.PostErrorCode;
+import org.sopt.global.exception.BusinessException;
+import org.sopt.global.code.GlobalErrorCode;
 import org.sopt.member.domain.Member;
 import org.sopt.member.repository.MemberRepository;
 import org.sopt.member.code.MemberErrorCode;
@@ -129,8 +131,9 @@ public class PostService {
         return toPostResponse(findPostOrThrow(id));
     }
 
-    public PostResponse updatePost(long id, String title, String content, PostCategory category, String tag) {
+    public PostResponse updatePost(long id, Long memberId, String title, String content, PostCategory category, String tag) {
         Post post = findPostOrThrow(id);
+        validateAuthor(post, memberId);
         post.update(title, content, category, tag);
         return toPostResponse(post);
     }
@@ -188,10 +191,17 @@ public class PostService {
                 .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
     }
 
-    public void deletePost(long id) {
-        findPostForUpdate(id);
+    public void deletePost(long id, Long memberId) {
+        Post post = findPostForUpdate(id);
+        validateAuthor(post, memberId);
         postLikeRepository.deleteAllByPostId(id);
         postLikeRepository.flush();
         repository.deleteById(id);
+    }
+
+    private void validateAuthor(Post post, Long memberId) {
+        if (post.getMember() == null || !post.getMember().getId().equals(memberId)) {
+            throw new BusinessException(GlobalErrorCode.FORBIDDEN);
+        }
     }
 }

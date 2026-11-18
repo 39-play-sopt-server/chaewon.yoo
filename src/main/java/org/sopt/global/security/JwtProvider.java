@@ -1,47 +1,51 @@
 package org.sopt.global.security;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
+import io.jsonwebtoken.JwtException;
+import org.sopt.auth.repository.TokenStore;
 import org.springframework.stereotype.Component;
-
-import javax.crypto.SecretKey;
-import java.util.Date;
 
 @Component
 public class JwtProvider {
 
-    private final SecretKey secretKey;
-    private final long accessTokenExpiration;
+    private final JwtTokenIssuer jwtTokenIssuer;
+    private final JwtTokenParser jwtTokenParser;
+    private final TokenStore tokenStore;
 
-    public JwtProvider(
-            @Value("${jwt.secret}") String secret,
-            @Value("${jwt.access-token-expiration}") long accessTokenExpiration
-    ) {
-        this.secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
-        this.accessTokenExpiration = accessTokenExpiration;
+    public JwtProvider(JwtTokenIssuer jwtTokenIssuer, JwtTokenParser jwtTokenParser, TokenStore tokenStore) {
+        this.jwtTokenIssuer = jwtTokenIssuer;
+        this.jwtTokenParser = jwtTokenParser;
+        this.tokenStore = tokenStore;
     }
 
-    public String createAccessToken(Long memberId) {
-        Date now = new Date();
+    public String createAccessToken(Long memberId, String tokenId) {
+        return jwtTokenIssuer.createToken(memberId, TokenType.ACCESS, tokenId);
+    }
 
-        return Jwts.builder()
-                .subject(String.valueOf(memberId))
-                .issuedAt(now)
-                .expiration(new Date(now.getTime() + accessTokenExpiration))
-                .signWith(secretKey)
-                .compact();
+    public String createRefreshToken(Long memberId, String tokenId) {
+        String token = jwtTokenIssuer.createToken(memberId, TokenType.REFRESH, tokenId);
+        JwtTokenClaims claims = jwtTokenParser.parse(token, TokenType.REFRESH);
+        tokenStore.save(tokenId, memberId, claims.expiresAt());
+        return token;
     }
 
     public Long getMemberId(String token) {
-        Claims claims = Jwts.parser()
-                .verifyWith(secretKey)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+        return validateToken(token, TokenType.ACCESS).memberId();
+    }
 
-        return Long.valueOf(claims.getSubject());
+    public JwtTokenClaims getRefreshTokenClaims(String token) {
+        return validateToken(token, TokenType.REFRESH);
+    }
+
+    public void invalidateSession(String accessToken) {
+        JwtTokenClaims claims = validateToken(accessToken, TokenType.ACCESS);
+        tokenStore.delete(claims.tokenId());
+    }
+
+    private JwtTokenClaims validateToken(String token, TokenType tokenType) {
+        JwtTokenClaims claims = jwtTokenParser.parse(token, tokenType);
+        if (!tokenStore.isActive(claims.tokenId(), claims.memberId())) {
+            throw new JwtException("만료되거나 로그아웃한 토큰입니다.");
+        }
+        return claims;
     }
 }

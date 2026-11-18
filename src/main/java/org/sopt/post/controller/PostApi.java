@@ -1,6 +1,7 @@
 package org.sopt.post.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -8,19 +9,21 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.sopt.global.response.ApiResponse;
 import org.sopt.post.dto.request.CreatePostRequest;
-import org.sopt.post.dto.request.LikePostRequest;
+
 import org.sopt.post.dto.request.UpdatePostRequest;
 import org.sopt.post.dto.response.PostResponse;
 import org.sopt.post.dto.response.PostPageResponse;
 
 @Tag(name = "게시글", description = "게시글 작성, 조회, 수정, 삭제")
 public interface PostApi {
+    @SecurityRequirement(name = "bearerAuth")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "로그인 필요 또는 토큰 만료")
     @Operation(summary = "게시글 작성")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "게시글 작성 완료")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "제목, 본문, 카테고리 등 요청 입력값이 올바르지 않음",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class)))
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "존재하지 않는 작성자 회원")
-    ResponseEntity<ApiResponse<PostResponse>> createPost(CreatePostRequest request);
+    ResponseEntity<ApiResponse<PostResponse>> createPost(CreatePostRequest request, @Parameter(hidden = true) Long memberId);
 
     @Operation(summary = "게시글 목록 조회", description = "작성자 ID와 카테고리를 선택적으로 필터링합니다. 생성일 최신순이며, 생성일이 같으면 ID 내림차순입니다.")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "페이지 번호, 페이지 크기, 작성자 ID 또는 카테고리가 올바르지 않음",
@@ -47,30 +50,40 @@ public interface PostApi {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class)))
     ResponseEntity<ApiResponse<PostResponse>> readPost(long id);
 
+    @SecurityRequirement(name = "bearerAuth")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "로그인 필요 또는 토큰 만료")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "작성자만 수정·삭제할 수 있음")
     @Operation(summary = "게시글 수정", description = "제목, 본문, 카테고리, 태그를 교체합니다.")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "제목, 본문, 카테고리 등 요청 입력값이 올바르지 않음",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class)))
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "존재하지 않는 게시글",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class)))
-    ResponseEntity<ApiResponse<PostResponse>> updatePost(long id, UpdatePostRequest request);
+    ResponseEntity<ApiResponse<PostResponse>> updatePost(long id, UpdatePostRequest request, @Parameter(hidden = true) Long memberId);
 
+    @SecurityRequirement(name = "bearerAuth")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "로그인 필요 또는 토큰 만료")
     @Operation(summary = "게시글 좋아요")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "회원 ID가 올바르지 않음")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "존재하지 않는 회원 또는 게시글")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 좋아요를 눌렀거나 DB 잠금 충돌이 발생함. 잠금 충돌 시 다시 요청해주세요.")
-    ResponseEntity<ApiResponse<Void>> likePost(long id, LikePostRequest request);
+    ResponseEntity<ApiResponse<Void>> likePost(long id, @Parameter(hidden = true) Long memberId);
 
+    @SecurityRequirement(name = "bearerAuth")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "로그인 필요 또는 토큰 만료")
     @Operation(summary = "게시글 좋아요 취소", description = "좋아요가 없으면 변경 없이 성공 응답을 반환합니다.")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "회원 ID가 올바르지 않음")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "존재하지 않는 회원 또는 게시글")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "DB 잠금 충돌. 잠시 후 다시 요청해주세요.")
-    ResponseEntity<ApiResponse<Void>> cancelLike(long id, Long memberId);
+    ResponseEntity<ApiResponse<Void>> cancelLike(long id, @Parameter(hidden = true) Long memberId);
 
+    @SecurityRequirement(name = "bearerAuth")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "로그인 필요 또는 토큰 만료")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "작성자만 수정·삭제할 수 있음")
     @Operation(summary = "게시글 삭제")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "게시글 ID 형식이 올바르지 않음",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class)))
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "존재하지 않는 게시글",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class)))
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "DB 잠금 충돌. 잠시 후 다시 요청해주세요.")
-    ResponseEntity<ApiResponse<Void>> deletePost(long id);
+    ResponseEntity<ApiResponse<Void>> deletePost(long id, @Parameter(hidden = true) Long memberId);
 }

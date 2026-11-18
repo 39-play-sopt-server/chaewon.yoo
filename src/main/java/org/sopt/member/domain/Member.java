@@ -2,24 +2,32 @@ package org.sopt.member.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import org.sopt.global.domain.BaseEntity;
 import org.sopt.member.code.MemberErrorCode;
 import org.sopt.member.exception.MemberException;
 
 @Entity
+@Table(uniqueConstraints = @UniqueConstraint(name = "uk_member_email", columnNames = "email"))
 public class Member extends BaseEntity {
     @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(nullable = false, unique = true)
+    @Column
     private String email;
 
-    @Column(nullable = false)
     private String password;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20, columnDefinition = "varchar(20) default 'ROLE_USER'")
+    private MemberRole role = MemberRole.ROLE_USER;
 
     protected Member() {}
 
-    public Member(String name) {
+    public Member(String name, String email, String password) {
         if (name == null || name.isBlank()) {
             throw new MemberException(MemberErrorCode.MEMBER_NAME_REQUIRED);
         }
@@ -27,16 +35,16 @@ public class Member extends BaseEntity {
             throw new MemberException(MemberErrorCode.MEMBER_NAME_TOO_LONG);
         }
         this.name = name;
-    }
-
-    public Member(String name, String email, String password) {
-        this(name);
         this.email = email;
         this.password = password;
     }
 
-    public String getEmail() {
-        return email;
+    public static Member createSocial(String name, String email) {
+        return new Member(name, email, null);
+    }
+
+    public MemberRole getRole() {
+        return role;
     }
 
     public String getPassword() {
