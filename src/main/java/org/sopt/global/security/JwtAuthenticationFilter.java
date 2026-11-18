@@ -1,6 +1,7 @@
 package org.sopt.global.security;
 
 import io.jsonwebtoken.JwtException;
+import org.sopt.member.repository.MemberRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -8,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -19,8 +21,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
 
-    public JwtAuthenticationFilter(JwtProvider jwtProvider) {
+    private final MemberRepository memberRepository;
+
+    public JwtAuthenticationFilter(JwtProvider jwtProvider, MemberRepository memberRepository) {
         this.jwtProvider = jwtProvider;
+        this.memberRepository = memberRepository;
     }
 
     @Override
@@ -35,10 +40,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 Long memberId = jwtProvider.getMemberId(token);
 
-                // 인증 완료된 Authentication 생성 후 SecurityContext에 저장
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(memberId, null, List.of());
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                memberRepository.findById(memberId).ifPresent(member -> {
+                    SimpleGrantedAuthority authority = new SimpleGrantedAuthority(member.getRole().name());
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(memberId, null, List.of(authority));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                });
             } catch (JwtException | IllegalArgumentException e) {
                 // 유효하지 않은 토큰이면 인증 정보를 저장하지 않는다.
             }

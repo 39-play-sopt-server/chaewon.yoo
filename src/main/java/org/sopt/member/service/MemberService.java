@@ -1,6 +1,9 @@
 package org.sopt.member.service;
 
 import org.springframework.stereotype.Service;
+import java.util.List;
+import org.sopt.auth.repository.TokenStore;
+import org.sopt.auth.repository.SocialAccountRepository;
 import org.springframework.transaction.annotation.Transactional;
 import org.sopt.member.code.MemberErrorCode;
 import org.sopt.member.domain.Member;
@@ -16,18 +19,24 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final PostRepository postRepository;
     private final PostLikeRepository postLikeRepository;
+    private final TokenStore tokenStore;
+    private final SocialAccountRepository socialAccountRepository;
 
     public MemberService(MemberRepository memberRepository, PostRepository postRepository,
-                         PostLikeRepository postLikeRepository) {
+                         PostLikeRepository postLikeRepository, TokenStore tokenStore,
+                         SocialAccountRepository socialAccountRepository) {
         this.memberRepository = memberRepository;
         this.postRepository = postRepository;
         this.postLikeRepository = postLikeRepository;
+        this.tokenStore = tokenStore;
+        this.socialAccountRepository = socialAccountRepository;
     }
 
-    public MemberResponse createMember(String name) {
-        Member member = new Member(name);
-        memberRepository.save(member);
-        return MemberResponse.from(member);
+    @Transactional(readOnly = true)
+    public List<MemberResponse> readMembers() {
+        return memberRepository.findAll().stream()
+                .map(MemberResponse::from)
+                .toList();
     }
 
     public void deleteMember(long id) {
@@ -36,6 +45,9 @@ public class MemberService {
         postRepository.clearAuthorByMemberId(id);
         postLikeRepository.deleteAllByMemberId(id);
         postLikeRepository.flush();
+        socialAccountRepository.deleteAllByMemberId(id);
         memberRepository.delete(member);
+        memberRepository.flush();
+        tokenStore.deleteAllByMemberId(id);
     }
 }

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.sopt.global.response.ApiResponse;
 import org.sopt.post.code.PostSuccessCode;
 import org.sopt.post.dto.request.CreatePostRequest;
-import org.sopt.post.dto.request.LikePostRequest;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.sopt.post.dto.request.UpdatePostRequest;
 import org.sopt.post.dto.response.PostResponse;
 import org.sopt.post.domain.PostCategory;
@@ -30,9 +30,10 @@ public class PostController implements PostApi {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<PostResponse>> createPost(@RequestBody CreatePostRequest request) {
+    public ResponseEntity<ApiResponse<PostResponse>> createPost(@RequestBody CreatePostRequest request,
+                                                               @AuthenticationPrincipal Long memberId) {
         PostResponse post = service.createPost(
-                request.memberId(), request.title(), request.content(),
+                memberId, request.title(), request.content(),
                 PostCategory.fromNumber(request.category()), request.tag());
 
         return ResponseEntity.status(PostSuccessCode.POST_CREATED.getStatus())
@@ -72,9 +73,10 @@ public class PostController implements PostApi {
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<PostResponse>> updatePost(
-            @PathVariable("id") long id, @RequestBody UpdatePostRequest request) {
+            @PathVariable("id") long id, @RequestBody UpdatePostRequest request,
+            @AuthenticationPrincipal Long memberId) {
         PostResponse post = service.updatePost(
-                id, request.title(), request.content(),
+                id, memberId, request.title(), request.content(),
                 PostCategory.fromNumber(request.category()), request.tag());
 
         return ResponseEntity.status(PostSuccessCode.POST_UPDATED.getStatus())
@@ -83,23 +85,24 @@ public class PostController implements PostApi {
 
     @PostMapping("/{id}/likes")
     public ResponseEntity<ApiResponse<Void>> likePost(
-            @PathVariable("id") long id, @RequestBody LikePostRequest request) {
-        service.likePost(id, request.memberId());
+            @PathVariable("id") long id, @AuthenticationPrincipal Long memberId) {
+        service.likePost(id, memberId);
         return ResponseEntity.status(PostSuccessCode.POST_LIKED.getStatus())
                 .body(ApiResponse.success(PostSuccessCode.POST_LIKED));
     }
 
     @DeleteMapping("/{id}/likes")
     public ResponseEntity<ApiResponse<Void>> cancelLike(
-            @PathVariable("id") long id, @RequestParam(name = "memberId") Long memberId) {
+            @PathVariable("id") long id, @AuthenticationPrincipal Long memberId) {
         service.cancelLike(id, memberId);
         return ResponseEntity.status(PostSuccessCode.POST_LIKE_CANCELED.getStatus())
                 .body(ApiResponse.success(PostSuccessCode.POST_LIKE_CANCELED));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deletePost(@PathVariable("id") long id) {
-        service.deletePost(id);
+    public ResponseEntity<ApiResponse<Void>> deletePost(@PathVariable("id") long id,
+                                                              @AuthenticationPrincipal Long memberId) {
+        service.deletePost(id, memberId);
         return ResponseEntity.status(PostSuccessCode.POST_DELETED.getStatus())
                 .body(ApiResponse.success(PostSuccessCode.POST_DELETED));
     }
